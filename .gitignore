@@ -28,3 +28,5 @@ src/test/java/UserForLogin.java
 .gitattributes
 gradlew
 gradlew.bat
+build
+.allure
