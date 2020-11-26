@@ -8,9 +8,11 @@ import static com.codeborne.selenide.Selenide.*;
 
 public class CreateIssueTests {
 
+    String assignedUser = "PodleshyySergey";
+    String lableBug = "bug";
+
     @BeforeEach
     public void setUp() {
-//        Configuration.baseUrl = "https://github.com/";
         Configuration.startMaximized = true;
         open("https://github.com/");
     }
@@ -28,7 +30,19 @@ public class CreateIssueTests {
         $("[data-hotkey='c']").click();
         String nameIssue = "Issue " + System.currentTimeMillis();
         $("#issue_title").val(nameIssue);
+        $("#assignees-select-menu").click();
+//        String assignedUser = "PodleshyySergey";
+        $("#assignee-filter-field").val(assignedUser);
+        $(".js-username").click();
+        $("#assignees-select-menu").click();
+        $("#labels-select-menu").click();
+        $("[data-label-name='" + lableBug + "']").parent().click();
+        $("#labels-select-menu").click();
         $x("//button[contains(text(),'Submit new issue')]").click();
+
+        $("#assignees-select-menu").sibling(0).$("span").shouldHave(Condition.text(assignedUser));
+//        String lableBug = "bug";
+        $("#labels-select-menu").sibling(0).$("span").shouldHave(Condition.text(lableBug));
 
         $("[data-content='Issues']").click();
         $(byText(nameIssue)).shouldBe(Condition.visible);
