@@ -1,5 +1,6 @@
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Configuration;
+import io.qameta.allure.Step;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static io.qameta.allure.Allure.step;
@@ -22,6 +23,8 @@ public class CreateIssueTests {
 
     @Test
     public void createIssueByClearSelenide() {
+        String nameIssue = "Issue " + System.currentTimeMillis();
+
 //        Открытие начальной страницы GitHub
         Configuration.startMaximized = true;
         open("https://github.com/");
@@ -40,10 +43,9 @@ public class CreateIssueTests {
         $(byText(repository)).click();
 //        Переход на вкладку 'Issues' в репозитории
         $("[data-content='Issues']").click();
-//        Обращение к кнопке создания репозитория
+//        Обращение к кнопке создания Issue
         $("[data-hotkey='c']").click();
 //        Ввод имени репозитория
-        String nameIssue = "Issue " + System.currentTimeMillis();
         $("#issue_title").val(nameIssue);
 //       Выбор того, кому будет назначена Issue
         $("#assignees-select-menu").click();
@@ -97,7 +99,7 @@ public class CreateIssueTests {
         step("Переход на вкладку 'Issues' в репозитории", () -> {
             $("[data-content='Issues']").click();
         });
-        step("Обращение к кнопке создания репозитория", () -> {
+        step("Обращение к кнопке создания Issue", () -> {
             $("[data-hotkey='c']").click();
         });
         step("Ввод имени репозитория", () -> {
@@ -131,4 +133,85 @@ public class CreateIssueTests {
 
     }
 
+    @Test
+    public void createIssueByBaseStep() {
+        String nameIssue = "Issue " + System.currentTimeMillis();
+
+        final BaseSteps baseSteps = new BaseSteps();
+
+        baseSteps.goToGitHub();
+        baseSteps.userLogin();
+        baseSteps.openRepoList();
+        baseSteps.goToRepo(repository);
+        baseSteps.openTabIssue();
+        baseSteps.createIssue(nameIssue, assignedUser, lableBug);
+        baseSteps.checkAssignerAndLabelIssue(assignedUser, lableBug);
+        baseSteps.checkIssueInList(nameIssue);
+    }
+
+
+    public static class BaseSteps {
+        @Step("Открытие начальной страницы GitHub")
+        public void goToGitHub() {
+            Configuration.startMaximized = true;
+            open("https://github.com/");
+        }
+
+        @Step("Авторизации на GitHub")
+        public void userLogin() {
+            $("[href='/login']").click();
+            $("#login_field").val(UserForLogin.USERLOGIN);
+            $("#password").val(UserForLogin.USERPASS);
+            $("[value='Sign in']").click();
+        }
+
+        @Step("Открытие списка репозиториев")
+        public void openRepoList() {
+            $("[aria-label='View profile and more']").click();
+            $(byText("Your repositories")).click();
+        }
+
+        @Step("Переход в репозиторий ")
+        public void goToRepo(String repo) {
+            $(byText(repo)).click();
+        }
+
+        @Step("Переход на вкладку 'Issues' в репозитории")
+        public void openTabIssue() {
+            $("[data-content='Issues']").click();
+        }
+
+        public void createIssue(String nameIssue, String assignedUser, String lableBug) {
+            //        Обращение к кнопке создания Issue
+            $("[data-hotkey='c']").click();
+            //        Ввод имени репозитория
+            $("#issue_title").val(nameIssue);
+            //       Выбор того, кому будет назначена Issue
+            $("#assignees-select-menu").click();
+            $("#assignee-filter-field").val(assignedUser);
+            $(".js-username").click();
+            $("#assignees-select-menu").click();
+            //        Выбор Label для Issue
+            $("#labels-select-menu").click();
+            $("[data-label-name='" + lableBug + "']").parent().click();
+            $("#labels-select-menu").click();
+            //        Обращение к кнопке сохранения Issue
+            $x("//button[contains(text(),'Submit new issue')]").click();
+        }
+
+        @Step("Проверка того, что в добавленной Issue отображается логин того, кому назначили и выбранная Label")
+        public void checkAssignerAndLabelIssue(String assignedUser, String lableBug) {
+            //        Проверка того, что в добавленной Issue отображается логин того, кому назначили и выбранная Label
+            $("#assignees-select-menu").sibling(0).$("span").shouldHave(Condition.text(assignedUser));
+            $("#labels-select-menu").sibling(0).$("span").shouldHave(Condition.text(lableBug));
+        }
+
+        @Step("Переход на вкладку 'Issues' в репозитории и проверка, что Issue с таким именем есть в списке")
+        public void checkIssueInList(String nameIssue) {
+            //        Переход на вкладку 'Issues' в репозитории и проверка, что Issue с таким именем есть в списке
+            $("[data-content='Issues']").click();
+            sleep(1000);
+            $(byText(nameIssue)).shouldBe(Condition.visible);
+        }
+    }
 }
