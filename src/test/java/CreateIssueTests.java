@@ -58,6 +58,7 @@ public class CreateIssueTests {
 
 //        Переход на вкладку 'Issues' в репозитории и проверка, что Issue с таким именем есть в списке
         $("[data-content='Issues']").click();
+        sleep(1000);
         $(byText(nameIssue)).shouldBe(Condition.visible);
     }
 
