@@ -1,28 +1,29 @@
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Configuration;
+import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.Step;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import io.qameta.allure.selenide.AllureSelenide;
+import org.junit.jupiter.api.*;
+
+import static com.codeborne.selenide.Selectors.withText;
 import static io.qameta.allure.Allure.step;
 
 import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selenide.*;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CreateIssueTests {
 
     String assignedUser = "PodleshyySergey";
     String lableBug = "bug";
     String repository = "qa_guru_3_2";
 
-    @BeforeEach
-    public void setUp() {
-//        Открытие начальной страницы GitHub
-        Configuration.startMaximized = true;
-        open("https://github.com/");
-    }
-
     @Test
+    @Order(0)
+    @DisplayName("Создание Issue на чистом Selenide")
     public void createIssueByClearSelenide() {
+        SelenideLogger.addListener("allure", new AllureSelenide());
+
         String nameIssue = "Issue " + System.currentTimeMillis();
 
 //        Открытие начальной страницы GitHub
@@ -67,9 +68,15 @@ public class CreateIssueTests {
         $("[data-content='Issues']").click();
         sleep(1000);
         $(byText(nameIssue)).shouldBe(Condition.visible);
+        sleep(1000);
+//        Выход из учетной записи GitHub
+        $("[aria-label='View profile and more']").click();
+        $x("//*[contains(text(),'Sign out')]").click();
     }
 
     @Test
+    @Order(1)
+    @DisplayName("Создание Issue с использованием лямбда шагов")
     public void createIssueByLambda() {
         String nameIssue = "Issue " + System.currentTimeMillis();
 
@@ -129,12 +136,19 @@ public class CreateIssueTests {
             $("[data-content='Issues']").click();
             sleep(1000);
             $(byText(nameIssue)).shouldBe(Condition.visible);
+            sleep(1000);
         });
 
+        step("Выход из учетной записи GitHub", () -> {
+            $("[aria-label='View profile and more']").click();
+            $x("//*[contains(text(),'Sign out')]").click();
+        });
     }
 
     @Test
-    public void createIssueByBaseStep() {
+    @Order(2)
+    @DisplayName("Создание Issue с использованием аннотаций")
+    public void createIssueByAnnotationStep() {
         String nameIssue = "Issue " + System.currentTimeMillis();
 
         final BaseSteps baseSteps = new BaseSteps();
@@ -145,8 +159,11 @@ public class CreateIssueTests {
         baseSteps.goToRepo(repository);
         baseSteps.openTabIssue();
         baseSteps.createIssue(nameIssue, assignedUser, lableBug);
+
         baseSteps.checkAssignerAndLabelIssue(assignedUser, lableBug);
         baseSteps.checkIssueInList(nameIssue);
+
+        baseSteps.deloginGitHub();
     }
 
 
@@ -181,6 +198,7 @@ public class CreateIssueTests {
             $("[data-content='Issues']").click();
         }
 
+        @Step("Создание новой Issue")
         public void createIssue(String nameIssue, String assignedUser, String lableBug) {
             //        Обращение к кнопке создания Issue
             $("[data-hotkey='c']").click();
@@ -199,7 +217,7 @@ public class CreateIssueTests {
             $x("//button[contains(text(),'Submit new issue')]").click();
         }
 
-        @Step("Проверка того, что в добавленной Issue отображается логин того, кому назначили и выбранная Label")
+        @Step("Проверка отображения в Issue 'Assigner' и 'Label'")
         public void checkAssignerAndLabelIssue(String assignedUser, String lableBug) {
             //        Проверка того, что в добавленной Issue отображается логин того, кому назначили и выбранная Label
             $("#assignees-select-menu").sibling(0).$("span").shouldHave(Condition.text(assignedUser));
@@ -212,6 +230,13 @@ public class CreateIssueTests {
             $("[data-content='Issues']").click();
             sleep(1000);
             $(byText(nameIssue)).shouldBe(Condition.visible);
+            sleep(1000);
+        }
+
+        @Step("Выход из учетной записи GitHub")
+        public void deloginGitHub() {
+            $("[aria-label='View profile and more']").click();
+            $x("//*[contains(text(),'Sign out')]").click();
         }
     }
 }

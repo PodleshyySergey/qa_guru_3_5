@@ -30,6 +30,7 @@ test {
 
 dependencies {
 
+    compile("io.qameta.allure:allure-selenide:2.13.6")
     testImplementation 'com.codeborne:selenide:5.15.1'
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.7.0'
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.7.0'
